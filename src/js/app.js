@@ -282,7 +282,7 @@ function setupSearch() {
 /* ---------- Init ---------- */
 
 export async function initApp() {
-  const res = await fetch("../data/attack-data.json");
+  const res = await fetch(`${import.meta.env.BASE_URL}data/attack-data.json`);
   S.data = await res.json();
   buildIndexes();
 

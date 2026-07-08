@@ -2,9 +2,10 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   root: 'src',
+  publicDir: '../public',
   base: '/attack-analysis-workbench/',
   build: {
-    outDir: 'dist',
+    outDir: '../dist',
     emptyOutDir: true,
     minify: 'terser',
     sourcemap: true,

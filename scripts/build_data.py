@@ -11,7 +11,7 @@ Usage:
 Download the bundle from:
     https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json
 
-Output: data/attack-data.json
+Output: data/attack-data.json and public/data/attack-data.json
 """
 import json
 import re
@@ -234,12 +234,18 @@ def main():
         "detections": dict(sorted(detections.items())),
     }
 
-    dest = Path(__file__).resolve().parent.parent / "data" / "attack-data.json"
-    dest.parent.mkdir(exist_ok=True)
-    dest.write_text(json.dumps(out, separators=(",", ":")))
-    size_kb = dest.stat().st_size // 1024
+    repo_root = Path(__file__).resolve().parent.parent
+    payload = json.dumps(out, separators=(",", ":"))
+    destinations = [
+        repo_root / "data" / "attack-data.json",
+        repo_root / "public" / "data" / "attack-data.json",
+    ]
+    for dest in destinations:
+        dest.parent.mkdir(exist_ok=True)
+        dest.write_text(payload)
+    size_kb = destinations[0].stat().st_size // 1024
     print(
-        f"Wrote {dest} ({size_kb} KB) — ATT&CK v{version}: "
+        f"Wrote {', '.join(str(dest) for dest in destinations)} ({size_kb} KB) — ATT&CK v{version}: "
         f"{len(tactic_order)} tactics, {len(techniques)} techniques, "
         f"{len(groups)} groups, {len(software)} software, "
         f"{len(campaigns)} campaigns, {len(mitigations)} mitigations, "

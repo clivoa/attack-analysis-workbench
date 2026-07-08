@@ -1,6 +1,6 @@
 # ATT&CK Analysis Workbench
 
-An interactive analysis workbench for [MITRE ATT&CK®](https://attack.mitre.org/) Enterprise. Explore the relationships between threat groups, software, techniques, tactics, campaigns and mitigations — then build a **threat profile** and turn it into actionable outputs: a technique heatmap, a prioritized detection-engineering worklist, and a mitigation investment ranking. Fully static site: no backend, no build step, ready for GitHub Pages.
+An interactive analysis workbench for [MITRE ATT&CK®](https://attack.mitre.org/) Enterprise. Explore the relationships between threat groups, software, techniques, tactics, campaigns and mitigations — then build a **threat profile** and turn it into actionable outputs: a technique heatmap, a prioritized detection-engineering worklist, and a mitigation investment ranking. Fully static site: no backend, built with Vite for GitHub Pages.
 
 > Not related to MITRE's own [ATT&CK Workbench](https://github.com/mitre-attack/attack-workbench-frontend) (a tool for editing ATT&CK datasets). This project consumes the official dataset for SOC / detection engineering / CTI analysis.
 
@@ -43,30 +43,36 @@ Answers *what should we detect* and *why*:
 
 ## Running locally
 
-Any static file server works:
+Install dependencies and run the Vite dev server:
 
 ```bash
 git clone https://github.com/<you>/attack-analysis-workbench.git
 cd attack-analysis-workbench
-python3 -m http.server 8000
-# open http://localhost:8000
+npm install
+npm run dev
 ```
+
+For a production preview, run `npm run build` followed by `npm run preview`.
 
 ## Project structure
 
 ```
 attack-analysis-workbench/
-├── index.html              # single page: topbar, tabs, the four views, side panel
-├── css/style.css           # all styling (dark theme, no framework)
-├── js/
-│   ├── app.js              # state (S), data load, indexes, search, threat profile, tabs, deep links
-│   ├── graph.js            # Explore: expandable D3 force-directed relationship graph
-│   ├── matrix.js           # Matrix: tactics × techniques heatmap + Navigator layer export
-│   ├── detect.js           # Detection Designer: scoring, telemetry model, cards, backlog, exports
-│   ├── defense.js          # Defense Planner: mitigation ranking, blind spots
-│   ├── panel.js            # universal entity detail panel with cross-navigation
-│   └── tour.js             # guided tours: engine + persona walkthrough definitions
-├── data/attack-data.json   # compact snapshot generated from the official STIX bundle
+├── src/
+│   ├── index.html          # single page: topbar, tabs, the four views, side panel
+│   ├── main.js             # Vite entrypoint
+│   ├── css/style.css       # all styling (dark theme)
+│   └── js/
+│       ├── app.js          # state (S), data load, indexes, search, threat profile, tabs, deep links
+│       ├── graph.js        # Explore: expandable D3 force-directed relationship graph
+│       ├── matrix.js       # Matrix: tactics x techniques heatmap + Navigator layer export
+│       ├── detect.js       # Detection Designer: scoring, telemetry model, cards, backlog, exports
+│       ├── defense.js      # Defense Planner: mitigation ranking, blind spots
+│       ├── panel.js        # universal entity detail panel with cross-navigation
+│       └── tour.js         # guided tours: engine + persona walkthrough definitions
+├── public/data/attack-data.json # dataset copied into the production build
+├── data/attack-data.json   # source copy of the compact dataset
+├── vite.config.js          # GitHub Pages base path and build settings
 └── scripts/build_data.py   # regenerates data/attack-data.json from enterprise-attack.json
 ```
 
@@ -74,23 +80,28 @@ All user state (threat profile, telemetry, detection backlog, tour flag) lives i
 
 ## Updating the data
 
-The site ships with a compact snapshot (`data/attack-data.json`) generated from the official ATT&CK STIX bundle. To refresh it:
+The site ships with a compact snapshot generated from the official ATT&CK STIX bundle. To refresh it:
 
 ```bash
 curl -LO https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json
 python3 scripts/build_data.py enterprise-attack.json
 ```
 
+The script updates both `data/attack-data.json` and `public/data/attack-data.json`.
+
 The script extracts active (non-revoked, non-deprecated) tactics, techniques, groups, software, campaigns and mitigations, plus the `uses`, `attributed-to`, `mitigates` and `detects` relationships between them. From the ATT&CK v18+ detection model it also extracts detection strategies, analytics (description, platforms, channel-level log source references, mutable/tuning elements) and a normalized log-source catalog.
 
 ## Deploying to GitHub Pages
 
-Push the repo to GitHub, then **Settings → Pages → Deploy from a branch** (`main`, root). Done — everything is static. The site will be served at `https://<you>.github.io/attack-analysis-workbench/`.
+GitHub Pages must use **GitHub Actions**, not "Deploy from a branch". The workflow in `.github/workflows/deploy.yml` builds the Vite app into `dist/` and deploys that artifact.
+
+In the repository settings, go to **Settings → Pages → Build and deployment → Source** and select **GitHub Actions**. After pushing to `main`, the site will be served at `https://<you>.github.io/attack-analysis-workbench/`.
 
 ## Stack
 
-- [D3.js v7](https://d3js.org/) (force simulation, zoom, drag) via CDN
-- Vanilla JS / CSS — no framework, no bundler
+- [D3.js v7](https://d3js.org/) (force simulation, zoom, drag)
+- Vite
+- Vanilla JS / CSS — no framework
 
 ## License & attribution
 
