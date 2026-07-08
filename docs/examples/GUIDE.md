@@ -141,16 +141,27 @@ Dia 4: Passar para Detection Engineering
 ```
 Dia 1: Receber profile do CTI → Carregar no Workbench
 Dia 2: Aplicar telemetria (Windows, Sysmon, etc)
-Dia 3: Exportar Detection Backlog (JSON)
-Dia 4: Criar tickets no Jira (automático ou manual)
+Dia 3: Importar inventário de regras (Sigma/CSV/JSON) → Gap analysis
+       Filtro "Gap + telemetry ready" = gaps mais baratos de fechar
+Dia 4: Exportar Detection Backlog (JSON) → Criar tickets no Jira
 Dia 5-10: Construir 3-5 regras de detecção
+          (cards sugerem regras públicas SigmaHQ como ponto de partida)
 ```
 
 **Outputs Esperados:**
-- ✅ Arquivo JSON (Detection Backlog)
+- ✅ Arquivo JSON (Detection Backlog, com cobertura de regras por técnica)
 - ✅ Tickets no Jira/Azure DevOps
 - ✅ Regras de detecção em SIEM
 - ✅ Documentação em Markdown
+
+**Gap analysis em 3 camadas (Detection Designer):**
+| Camada | Pergunta | Fonte |
+|--------|----------|-------|
+| Ameaça | O perfil usa esta técnica? | Threat profile |
+| Telemetria | Meus logs permitem detectá-la? | Log sources marcados |
+| Regras | Existe regra ativa cobrindo-a? | Inventário importado |
+
+O cruzamento ameaça ✓ + telemetria ✓ + regra ✗ = **gap pronto para fechar**.
 
 ---
 

@@ -96,6 +96,7 @@
         <span id="matrix-mode" class="matrix-mode"></span>
         <label class="check"><input type="checkbox" id="matrix-only-profile" /> Only techniques in profile</label>
         <label class="check"><input type="checkbox" id="matrix-show-subs" /> Show sub-techniques</label>
+        <label class="check" title="Overlay your imported detection rules: green = covered, dashed red = used by the profile but no rule"><input type="checkbox" id="matrix-rules" /> Rule coverage</label>
         <button id="export-layer" class="btn mini">Export Navigator layer ⭳</button>
       </div>
       <div id="matrix" class="matrix"></div>
@@ -119,6 +120,12 @@
           <option value="done">Implemented</option>
           <option value="na">Not applicable</option>
         </select>
+        <select id="dt-rulecov" title="Filter by your imported rule coverage">
+          <option value="">Any rule coverage</option>
+          <option value="covered">Has rules</option>
+          <option value="uncovered">No rules (gap)</option>
+          <option value="actionable">Gap + telemetry ready</option>
+        </select>
         <span class="toolbar-sep"></span>
         <button id="dt-export-md" class="btn mini">Export plan (Markdown) ⭳</button>
         <button id="dt-export-json" class="btn mini">Export plan (JSON) ⭳</button>
@@ -132,6 +139,15 @@
           <p class="def-explain">Tick the log sources your SOC actually ingests. Visibility per technique is computed against this.</p>
           <div id="tel-presets" class="tel-presets"></div>
           <div id="tel-groups"></div>
+
+          <div class="rail-head rules-rail-head">
+            <span class="section-title" style="margin:0">Your detection rules</span>
+            <button id="rules-clear" class="btn subtle mini">Clear</button>
+          </div>
+          <p class="def-explain">Import the rules you actually have deployed — Sigma YAML, CSV, JSON or a Navigator layer. Techniques are matched via ATT&CK tags (T####.###).</p>
+          <button id="rules-import" class="btn mini rules-import-btn">⭱ Import rules…</button>
+          <input id="rules-file" type="file" multiple hidden accept=".yml,.yaml,.csv,.json,.txt" />
+          <div id="rules-summary" class="rules-summary"></div>
         </aside>
         <div class="detect-main">
           <div id="dt-summary" class="detect-summary"></div>

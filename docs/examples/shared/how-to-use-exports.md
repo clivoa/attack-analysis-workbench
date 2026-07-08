@@ -99,28 +99,35 @@ Example: Detection Engineer workflow
 - ✅ Tracking progress (mark status = done/in_progress)
 - ✅ Automation (pipe to monitoring tools)
 
-**Example JSON structure:**
+**Example JSON structure** (as produced by *Export plan (JSON)*):
 ```json
 {
-  "profile": "APT29 + Lazarus Group",
-  "generated": "2025-07-08T14:32:00Z",
+  "generated": "2026-07-09T14:32:00.000Z",
+  "attackVersion": "19.1",
+  "threatProfile": ["G0016", "G0032"],
+  "telemetry": ["WinEventLog:Security", "WinEventLog:Sysmon"],
+  "rulesImported": 42,
   "techniques": [
     {
-      "id": "T1059.001",
+      "techniqueID": "T1059.001",
       "name": "PowerShell",
-      "threat_score": 98,
-      "prevalence_score": 30,
-      "exposure_score": 0,
-      "total_score": 98,
-      "visibility": "Full",
-      "status": "in_progress",
-      "required_log_sources": ["WinEventLog:Security"],
-      "mitigations": ["M1026"],
-      "link": "https://attack.mitre.org/techniques/T1059/001/"
+      "score": 98,
+      "components": { "threat": 50.0, "prevalence": 28.0, "exposure": 20 },
+      "visibility": "full",
+      "status": "planned",
+      "ruleCovered": true,
+      "rules": ["Suspicious PowerShell Encoded Command"],
+      "mitigationMapped": false,
+      "actorCount": 62,
+      "detectionStrategy": "DET0400",
+      "analytics": ["AN1109"],
+      "requiredLogSources": ["WinEventLog:Security"]
     }
   ]
 }
 ```
+
+`ruleCovered` / `rules` refletem seu inventário importado (Detection Designer → *Your detection rules*): `ruleCovered: false` com `visibility: "full"` = gap pronto para fechar.
 
 **How to use:**
 

@@ -307,6 +307,7 @@ export async function initApp() {
 
   window.Graph.init();
   window.Matrix.init();
+  window.Rules.init();
   window.Detect.init();
   window.Defense.init();
   window.Tour.init();
@@ -334,3 +335,4 @@ export { Detect } from './detect.js'
 export { Defense } from './defense.js'
 export { Panel } from './panel.js'
 export { Tour } from './tour.js'
+export { Rules } from './rules.js'

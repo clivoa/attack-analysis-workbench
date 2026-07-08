@@ -1,6 +1,7 @@
 /* Matrix view — ATT&CK tactics × techniques heatmap driven by the threat profile. */
 
 import { S, esc, profileHeat } from './app.js'
+import { Rules } from './rules.js'
 
 export const Matrix = (() => {
 
@@ -15,11 +16,18 @@ export const Matrix = (() => {
     S.dirty.matrix = false;
     const onlyProfile = document.getElementById("matrix-only-profile").checked;
     const showSubs = document.getElementById("matrix-show-subs").checked;
+    const showRules = document.getElementById("matrix-rules").checked;
+    const rulesOn = showRules && Rules.activeCount() > 0;
     const heat = profileHeat();
 
-    document.getElementById("matrix-mode").innerHTML = heat.isFallback
+    document.getElementById("matrix-mode").innerHTML = (heat.isFallback
       ? `Heatmap: <b>all ${heat.size} groups</b> (build a threat profile to focus it)`
-      : `Heatmap: <b>threat profile</b> (${heat.size} ${heat.size === 1 ? "entity" : "entities"})`;
+      : `Heatmap: <b>threat profile</b> (${heat.size} ${heat.size === 1 ? "entity" : "entities"})`)
+      + (showRules
+        ? rulesOn
+          ? ` · Rules: <b>${Rules.activeCount()} active</b> (<span class="m-key cov">✓ covered</span> / <span class="m-key gap">gap</span>)`
+          : ` · <b>no rules imported</b> — use Detection Designer → Your detection rules`
+        : "");
 
     const max = Math.max(1, ...[...heat.rolled.values()].map((r) => r.count));
     const container = document.getElementById("matrix");
@@ -33,14 +41,14 @@ export const Matrix = (() => {
         const rec = heat.rolled.get(tid);
         const count = rec ? rec.count : 0;
         if (onlyProfile && !count) continue;
-        cells.push(cellHtml(tid, count, max, rec, false));
+        cells.push(cellHtml(tid, count, max, rec, false, rulesOn));
 
         if (showSubs) {
           for (const sub of S.idx.subsOf.get(tid) || []) {
             const srec = heat.exact.get(sub);
             const scount = srec ? srec.count : 0;
             if (onlyProfile && !scount) continue;
-            cells.push(cellHtml(sub, scount, max, srec, true));
+            cells.push(cellHtml(sub, scount, max, srec, true, rulesOn));
           }
         }
       }
@@ -63,18 +71,21 @@ export const Matrix = (() => {
       h.addEventListener("click", () => window.Panel.show(h.dataset.id)));
   }
 
-  function cellHtml(tid, count, max, rec, isSub) {
+  function cellHtml(tid, count, max, rec, isSub, rulesOn) {
     const t = S.data.techniques[tid];
     const bg = heatColor(count, max);
     const hot = count / max > 0.55;
-    const title = rec
+    const cov = rulesOn ? Rules.covered(tid) : null;
+    let title = rec
       ? `${tid} ${t.name}\nUsed by ${count}: ${rec.who.join(", ")}${count > rec.who.length ? "…" : ""}`
       : `${tid} ${t.name}`;
+    if (rulesOn) title += cov ? "\n✓ covered by your rules" : count ? "\n✗ no detection rule — gap" : "\n✗ no detection rule";
     return `
-      <div class="m-cell${isSub ? " sub" : ""}${bg ? " heat" : ""}${hot ? " hot" : ""}"
+      <div class="m-cell${isSub ? " sub" : ""}${bg ? " heat" : ""}${hot ? " hot" : ""}${cov === true ? " cov" : ""}${cov === false && count ? " gap" : ""}"
            data-id="${tid}" title="${esc(title)}"
            ${bg ? `style="background:${bg}"` : ""}>
         <span class="m-name">${isSub ? "↳ " : ""}${esc(t.name)}</span>
+        ${cov === true ? `<span class="m-cov">✓</span>` : ""}
         ${count ? `<span class="m-badge">${count}</span>` : ""}
       </div>`;
   }
@@ -117,6 +128,7 @@ export const Matrix = (() => {
   function init() {
     document.getElementById("matrix-only-profile").addEventListener("change", render);
     document.getElementById("matrix-show-subs").addEventListener("change", render);
+    document.getElementById("matrix-rules").addEventListener("change", render);
     document.getElementById("export-layer").addEventListener("click", exportLayer);
   }
 
