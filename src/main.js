@@ -7,6 +7,7 @@ import { Detect } from './js/detect.js'
 import { Defense } from './js/defense.js'
 import { Panel } from './js/panel.js'
 import { Tour } from './js/tour.js'
+import { Rules } from './js/rules.js'
 
 // Expose D3 and modules globally for compatibility
 window.d3 = d3
@@ -16,6 +17,7 @@ window.Detect = Detect
 window.Defense = Defense
 window.Panel = Panel
 window.Tour = Tour
+window.Rules = Rules
 
 // Theme toggle — the saved theme is applied by an inline script in index.html
 document.getElementById('theme-toggle').addEventListener('click', () => {

@@ -89,6 +89,29 @@ cat high-priority.json | jq -r '.[] | [.id, .name, .total_score] | @csv' > ticke
 
 ---
 
+### "Quero saber quais gaps de detecção fechar primeiro"
+
+```
+1. Carregue threat profile
+2. Vá para Detection Designer
+3. Aplique telemetria (seus log sources)
+4. Em "Your detection rules" → "⭱ Import rules…"
+   (Sigma YAML, CSV, JSON ou Navigator layer)
+5. Veja os cards: "rule coverage %" e "gaps ready to close"
+6. Filtre: "Gap + telemetry ready"
+   → técnicas sem regra mas com telemetria pronta
+7. Abra o card da técnica → "Suggested public rules"
+   → regras SigmaHQ prontas, com link para o GitHub
+✅ Backlog de gaps priorizados, com regra sugerida para cada um
+```
+
+**Tempo:** 5 minutos | **Resultado:** Lista de gaps acionáveis
+
+**Dica:** No Matrix, marque "Rule coverage" para ver o overlay:
+verde = coberto por regra sua, tracejado vermelho = usado pelo perfil sem regra.
+
+---
+
 ### "Preciso de um relatório para liderança"
 
 ```
@@ -157,10 +180,10 @@ T1059.001 PowerShell:
 ## 🔄 Fluxo Semanal (Detection Engineer)
 
 ```
-SEGUNDA:     Load threat profile → Set telemetry
-TERÇA:       Export backlog → Create Jira tickets (top 10)
-QUARTA-5ª:   Build 2-3 detection rules
-SEXTA:       Test + fine-tune rules → Deploy
+SEGUNDA:     Load threat profile → Set telemetry → Import rule inventory
+TERÇA:       Filter "Gap + telemetry ready" → Export backlog → Jira tickets (top 10)
+QUARTA-5ª:   Build 2-3 detection rules (partindo das sugestões SigmaHQ)
+SEXTA:       Test + fine-tune rules → Deploy → Re-import inventory (coverage sobe)
 ```
 
 ---

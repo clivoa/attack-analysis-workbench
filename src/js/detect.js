@@ -1,6 +1,7 @@
 /* Detection Designer — prioritized detection-engineering worklist. */
 
 import { S, TYPE_META, typeOf, getEnt, esc, profileHeat, switchView, attackUrl } from './app.js'
+import { Rules } from './rules.js'
 
 export const Detect = (() => {
   const TEL_KEY = "attack-workbench-telemetry";
@@ -77,6 +78,7 @@ export const Detect = (() => {
         score: threat + prevalence + exposure,
         vis: visibilityOf(tid),
         status: backlog[tid] || "review",
+        covered: Rules.covered(tid),
       });
     }
     rows.sort((a, b) => b.score - a.score || a.tid.localeCompare(b.tid));
@@ -88,11 +90,15 @@ export const Detect = (() => {
     const plat = document.getElementById("dt-platform").value;
     const vis = document.getElementById("dt-visibility").value;
     const status = document.getElementById("dt-status").value;
+    const rulecov = document.getElementById("dt-rulecov").value;
 
     return rows.filter((r) => {
       if (q && !(`${r.tid} ${r.t.name}`.toLowerCase().includes(q))) return false;
       if (vis && r.vis !== vis) return false;
       if (status && r.status !== status) return false;
+      if (rulecov === "covered" && !r.covered) return false;
+      if (rulecov === "uncovered" && r.covered) return false;
+      if (rulecov === "actionable" && (r.covered || !["full", "partial"].includes(r.vis))) return false;
       if (plat) {
         const det = S.data.detections[r.tid];
         const plats = new Set((det ? det.analytics : []).flatMap((a) => a.platforms));
@@ -139,17 +145,21 @@ export const Detect = (() => {
 
   function renderSummary(scope, rows) {
     const vis = { full: 0, partial: 0, blind: 0, unknown: 0 };
-    let noMit = 0, planned = 0, done = 0;
+    let noMit = 0, planned = 0, done = 0, ruled = 0, actionable = 0;
     for (const r of scope.rows) {
       vis[r.vis]++;
       if (r.exposure) noMit++;
       if (r.status === "planned") planned++;
       if (r.status === "done") done++;
+      if (r.covered) ruled++;
+      else if (r.vis === "full" || r.vis === "partial") actionable++;
     }
     const denom = scope.rows.length || 1;
     const covPct = telemetry.size
       ? Math.round(((vis.full + 0.5 * vis.partial) / denom) * 100)
       : null;
+    const hasRules = Rules.activeCount() > 0;
+    const rulePct = Math.round((ruled / denom) * 100);
 
     document.getElementById("dt-summary").innerHTML = `
       <div class="sum-card">
@@ -164,9 +174,18 @@ export const Detect = (() => {
         <div class="sum-num">${noMit}</div>
         <div class="sum-lbl">no mitigation mapped — detection-only</div>
       </div>
+      ${hasRules ? `
+      <div class="sum-card ${rulePct < 40 ? "bad" : rulePct < 70 ? "mid" : "good"}">
+        <div class="sum-num">${rulePct}%</div>
+        <div class="sum-lbl">rule coverage (${ruled} of ${scope.rows.length} techniques have a rule)</div>
+      </div>
+      <div class="sum-card ${actionable ? "warn" : ""}" title="No rule yet, but your telemetry already supports detection — the cheapest gaps to close">
+        <div class="sum-num">${actionable}</div>
+        <div class="sum-lbl">gaps ready to close — telemetry ok, no rule</div>
+      </div>` : ""}
       <div class="sum-card">
         <div class="sum-num">${done}<span class="sum-sub">/${done + planned}</span></div>
-        <div class="sum-lbl">rules implemented / in backlog</div>
+        <div class="sum-lbl">backlog implemented / total</div>
       </div>
       ${rows.length !== scope.rows.length ? `<div class="sum-note">${rows.length} shown after filters</div>` : ""}`;
   }
@@ -197,6 +216,9 @@ export const Detect = (() => {
           <span class="wl-who" title="${esc(whoPreview)}${r.whoCount > 3 ? "…" : ""}">${r.whoCount}× actors</span>
           ${r.exposure ? `<span class="wl-flag" title="No mitigation mapped in ATT&CK — detection is the only control">⚠ no mitigation</span>` : `<span class="wl-flag ok">mitigable</span>`}
           <span class="wl-vis ${visMeta[1]}" title="${visMeta[2]}">${visMeta[0]}</span>
+          ${Rules.activeCount() ? (r.covered
+            ? `<span class="wl-cov" title="Covered by your imported rules">✓ rule</span>`
+            : `<span class="wl-cov gap" title="No imported rule maps to this technique${["full", "partial"].includes(r.vis) ? " — telemetry is already available" : ""}">no rule</span>`) : ""}
           <select class="wl-status" data-tid="${r.tid}">
             ${Object.entries(STATUS_LABELS).map(([v, l]) =>
               `<option value="${v}" ${r.status === v ? "selected" : ""}>${l}</option>`).join("")}
@@ -267,6 +289,8 @@ export const Detect = (() => {
               ${an.tuning.length ? `<div class="an-tuning">Tuning knobs: ${an.tuning.map((f) => `<code>${esc(f)}</code>`).join(", ")}</div>` : ""}
             </div>`;
           }).join("") : `<p class="dcard-p">No analytics defined.</p>`}
+          ${coverageHtml(r)}
+          ${sigmaHtml(r)}
           <div class="dcard-actions">
             <button class="btn mini dcard-copy" data-tid="${r.tid}">Copy card (Markdown)</button>
             <a class="btn mini" href="${attackUrl(r.tid)}" target="_blank" rel="noopener">ATT&CK ↗</a>
@@ -274,6 +298,48 @@ export const Detect = (() => {
           </div>
         </div>
       </div>`;
+  }
+
+  /* Imported-rule coverage block for one technique. */
+  function coverageHtml(r) {
+    if (!Rules.count()) return "";
+    const cov = Rules.coverageFor(r.tid);
+    if (!cov.length) {
+      const ready = ["full", "partial"].includes(r.vis);
+      return `
+        <div class="dcard-h" style="margin-top:12px">Your coverage</div>
+        <p class="dcard-p cov-gap">✗ No imported rule maps to ${r.tid}.
+        ${ready ? `<b class="warn-text">Your telemetry already supports detection here — this gap is ready to close.</b>` : ""}</p>`;
+    }
+    return `
+      <div class="dcard-h" style="margin-top:12px">Your coverage <span class="count">${cov.length} rule${cov.length === 1 ? "" : "s"}</span></div>
+      <ul class="cov-list">${cov.slice(0, 8).map((c) => `
+        <li>
+          <span class="cov-mark">✓</span>
+          <span class="cov-name">${esc(c.n)}</span>
+          ${c.via ? `<span class="cov-via" title="Rule is tagged ${c.via}">via ${c.via}</span>` : ""}
+          <span class="cov-src">${esc(c.src)}</span>
+        </li>`).join("")}
+        ${cov.length > 8 ? `<li class="cov-more">…and ${cov.length - 8} more</li>` : ""}
+      </ul>`;
+  }
+
+  /* Public SigmaHQ rule suggestions for one technique. */
+  function sigmaHtml(r) {
+    const sug = Rules.suggest(r.tid);
+    if (!sug || !sug.entries.length) return "";
+    const LEVELS = { critical: "crit", high: "high", medium: "med", low: "low" };
+    return `
+      <div class="dcard-h" style="margin-top:12px">Suggested public rules
+        <span class="count">SigmaHQ · ${sug.total} available${sug.via ? ` for parent ${sug.via}` : ""}</span>
+      </div>
+      <ul class="sigma-list">${sug.entries.map(([path, title, level, status]) => `
+        <li>
+          <a href="${Rules.sigmaUrl(path)}" target="_blank" rel="noopener">${esc(title)}</a>
+          ${level ? `<span class="sig-level ${LEVELS[level] || ""}">${esc(level)}</span>` : ""}
+          ${status ? `<span class="sig-status">${esc(status)}</span>` : ""}
+        </li>`).join("")}
+      </ul>`;
   }
 
   function wireRows(list) {
@@ -410,6 +476,12 @@ export const Detect = (() => {
       `- **Tactic:** ${r.t.tactics.join(", ")}`,
       `- **Status:** ${STATUS_LABELS[r.status]}`,
       `- **Visibility:** ${r.vis}`,
+      ...(Rules.count() ? [`- **Rule coverage:** ${(() => {
+        const cov = Rules.coverageFor(r.tid);
+        return cov.length
+          ? cov.slice(0, 8).map((c) => c.n + (c.via ? ` (via ${c.via})` : "")).join("; ") + (cov.length > 8 ? "…" : "")
+          : "NONE — gap";
+      })()}`] : []),
       `- **Mitigation mapped:** ${r.exposure ? "NO — detection-only" : "yes"}`,
       `- **Known actors (${r.gcount}):** ${groups.slice(0, 12).join(", ")}${groups.length > 12 ? "…" : ""}`,
       ``,
@@ -443,6 +515,7 @@ export const Detect = (() => {
       ``,
       `- **Threat profile:** ${profileNames}`,
       `- **Telemetry:** ${telemetry.size ? [...telemetry].sort().join(", ") : "not configured"}`,
+      `- **Rule inventory:** ${Rules.count() ? `${Rules.activeCount()} active rules imported (${rows.filter((r) => r.covered).length} of ${rows.length} techniques covered)` : "not imported"}`,
       `- **Techniques in plan:** ${rows.length}`,
       ``,
       `---`,
@@ -458,6 +531,7 @@ export const Detect = (() => {
       attackVersion: S.data.attackVersion,
       threatProfile: [...S.profile],
       telemetry: [...telemetry].sort(),
+      rulesImported: Rules.activeCount(),
       techniques: rows.map((r) => ({
         techniqueID: r.tid,
         name: r.t.name,
@@ -465,6 +539,8 @@ export const Detect = (() => {
         components: { threat: +r.threat.toFixed(1), prevalence: +r.prevalence.toFixed(1), exposure: r.exposure },
         visibility: r.vis,
         status: r.status,
+        ruleCovered: r.covered,
+        rules: Rules.coverageFor(r.tid).map((c) => c.n),
         mitigationMapped: !r.exposure,
         actorCount: r.gcount,
         detectionStrategy: S.data.detections[r.tid]?.det || null,
@@ -531,7 +607,7 @@ export const Detect = (() => {
       `<option value="">All platforms</option>` +
       [...plats].sort().map((p) => `<option value="${esc(p)}">${esc(p)}</option>`).join("");
 
-    for (const id of ["dt-search", "dt-platform", "dt-visibility", "dt-status"]) {
+    for (const id of ["dt-search", "dt-platform", "dt-visibility", "dt-status", "dt-rulecov"]) {
       document.getElementById(id).addEventListener(id === "dt-search" ? "input" : "change",
         () => { limit = PAGE; renderMainOnly(); });
     }

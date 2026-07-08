@@ -48,7 +48,11 @@
 :root[data-theme="light"] .sum-card.good .sum-num,
 :root[data-theme="light"] .ls-list li.have .ls-mark,
 :root[data-theme="light"] .an-ok,
-:root[data-theme="light"] .an-log.have { color: #16a34a; }
+:root[data-theme="light"] .an-log.have,
+:root[data-theme="light"] .wl-cov:not(.gap),
+:root[data-theme="light"] .cov-mark,
+:root[data-theme="light"] .m-cell:not(.heat) .m-cov,
+:root[data-theme="light"] .m-key.cov { color: #16a34a; }
 :root[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #9aa6c0; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1204,6 +1208,67 @@ main { flex: 1; display: flex; min-height: 0; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 5px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a4566; }
+
+/* ---------- Rule inventory & gap analysis ---------- */
+
+/* Rail block (Detection Designer sidebar) */
+.rules-rail-head { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.rules-import-btn { width: 100%; margin-bottom: 8px; }
+.rules-summary { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; }
+.rules-summary b { color: var(--text); }
+.rules-empty { color: var(--text-faint); }
+.rules-off { color: var(--text-faint); }
+.rules-note { margin-top: 4px; color: var(--accent); font-size: 11px; }
+
+/* Worklist coverage chip */
+.wl-cov {
+  font: 600 10px var(--mono);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  border-radius: 5px;
+  padding: 2px 6px;
+  width: 58px;
+  text-align: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.wl-cov.gap { color: var(--danger); border-color: rgba(248, 113, 113, 0.35); border-style: dashed; }
+
+/* Detection card: your coverage */
+.cov-list { list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; }
+.cov-list li { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.cov-mark { color: #4ade80; font-weight: 700; flex-shrink: 0; }
+.cov-name { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cov-via { font: 600 9.5px var(--mono); color: var(--accent-2); flex-shrink: 0; }
+.cov-src { font: 400 10px var(--mono); color: var(--text-faint); flex-shrink: 0; margin-left: auto; }
+.cov-more { color: var(--text-faint); }
+.cov-gap { color: var(--text-dim); }
+
+/* Detection card: SigmaHQ suggestions */
+.sigma-list { list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; }
+.sigma-list li { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.sigma-list a { color: var(--text); font-weight: 600; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sigma-list a:hover { color: var(--accent); text-decoration: underline; }
+.sig-level {
+  font: 600 9px var(--mono);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  border: 1px solid var(--border-bright);
+}
+.sig-level.crit { color: var(--danger); border-color: rgba(248, 113, 113, 0.5); }
+.sig-level.high { color: var(--warn); border-color: rgba(251, 191, 36, 0.45); }
+.sig-level.med { color: var(--accent); border-color: rgba(94, 234, 212, 0.35); }
+.sig-status { font: 400 9.5px var(--mono); color: var(--text-faint); flex-shrink: 0; }
+
+/* Matrix overlay */
+.m-cell.cov { border-color: rgba(74, 222, 128, 0.55); }
+.m-cell.gap { border-color: rgba(248, 113, 113, 0.6); border-style: dashed; }
+.m-cov { font-size: 9px; font-weight: 700; color: #4ade80; flex-shrink: 0; }
+.m-cell.hot .m-cov { color: #06251f; }
+.m-key.cov { color: #4ade80; }
+.m-key.gap { color: var(--danger); }
 
 /* Responsive */
 @media (max-width: 1100px) {
