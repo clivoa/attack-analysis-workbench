@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATT&CK Analysis Workbench</title>
+  <meta name="description" content="Interactive analysis workbench for MITRE ATT&CK: explore relationships between threat groups, software, techniques and campaigns, build threat profiles, and prioritize mitigations." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">◉</div>
+      <div>
+        <h1>ATT&CK Analysis Workbench</h1>
+        <p class="subtitle">MITRE ATT&CK<sup>®</sup> Enterprise <span id="attack-version"></span></p>
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-view="explore" role="tab">Explore</button>
+      <button class="tab" data-view="matrix" role="tab">Matrix</button>
+      <button class="tab" data-view="detect" role="tab">Detection Designer</button>
+      <button class="tab" data-view="defense" role="tab">Defense Planner</button>
+    </nav>
+
+    <div class="controls">
+      <button id="tour-btn" class="btn mini tour-btn" title="Guided walkthroughs by role">✦ Tour</button>
+      <div class="search-wrap">
+        <input id="search" type="search" placeholder="Search groups, software, techniques… ( / )" autocomplete="off" spellcheck="false" />
+        <ul id="search-results" class="search-results" hidden></ul>
+      </div>
+    </div>
+  </header>
+
+  <div class="profile-bar">
+    <span class="profile-label">Threat profile</span>
+    <div id="profile-chips" class="profile-chips">
+      <span class="profile-empty">empty — add groups, software or campaigns to drive the Matrix heatmap and Defense Planner</span>
+    </div>
+    <div class="profile-actions">
+      <button id="profile-graph" class="btn subtle mini" title="Add all profile entities to the Explore graph">→ Graph</button>
+      <button id="profile-clear" class="btn subtle mini" title="Remove all entities from the profile">Clear</button>
+    </div>
+  </div>
+
+  <main>
+    <!-- ============ EXPLORE ============ -->
+    <section id="view-explore" class="view active">
+      <div class="graph-wrap">
+        <div class="graph-toolbar">
+          <span class="toolbar-label">On expand, add:</span>
+          <label><input type="checkbox" data-expand="group" checked /> Groups</label>
+          <label><input type="checkbox" data-expand="software" checked /> Software</label>
+          <label><input type="checkbox" data-expand="campaign" checked /> Campaigns</label>
+          <label><input type="checkbox" data-expand="technique" /> Techniques</label>
+          <label><input type="checkbox" data-expand="mitigation" /> Mitigations</label>
+          <span class="toolbar-sep"></span>
+          <button id="graph-clear" class="btn subtle mini">Clear graph</button>
+        </div>
+        <svg id="graph"></svg>
+        <div id="graph-empty" class="graph-empty">
+          <p><b>Relationship explorer.</b> Search for any entity and add it to the graph, then <b>double-click nodes to expand</b> their relationships — who uses what, which campaigns deployed which malware, what mitigates what.</p>
+          <button id="graph-example" class="btn">Load example: APT29 ecosystem</button>
+        </div>
+        <div id="tooltip" class="tooltip" hidden></div>
+        <div class="legend" id="graph-legend"></div>
+      </div>
+    </section>
+
+    <!-- ============ MATRIX ============ -->
+    <section id="view-matrix" class="view">
+      <div class="matrix-toolbar">
+        <span id="matrix-mode" class="matrix-mode"></span>
+        <label class="check"><input type="checkbox" id="matrix-only-profile" /> Only techniques in profile</label>
+        <label class="check"><input type="checkbox" id="matrix-show-subs" /> Show sub-techniques</label>
+        <button id="export-layer" class="btn mini">Export Navigator layer ⭳</button>
+      </div>
+      <div id="matrix" class="matrix"></div>
+    </section>
+
+    <!-- ============ DETECTION DESIGNER ============ -->
+    <section id="view-detect" class="view">
+      <div class="detect-toolbar">
+        <input id="dt-search" type="search" placeholder="Filter techniques…" autocomplete="off" spellcheck="false" />
+        <select id="dt-platform"><option value="">All platforms</option></select>
+        <select id="dt-visibility">
+          <option value="">Any visibility</option>
+          <option value="full">Full</option>
+          <option value="partial">Partial</option>
+          <option value="blind">Blind</option>
+        </select>
+        <select id="dt-status">
+          <option value="">Any status</option>
+          <option value="review">To review</option>
+          <option value="planned">Planned</option>
+          <option value="done">Implemented</option>
+          <option value="na">Not applicable</option>
+        </select>
+        <span class="toolbar-sep"></span>
+        <button id="dt-export-md" class="btn mini">Export plan (Markdown) ⭳</button>
+        <button id="dt-export-json" class="btn mini">Export plan (JSON) ⭳</button>
+      </div>
+      <div class="detect-layout">
+        <aside class="telemetry-rail">
+          <div class="rail-head">
+            <span class="section-title" style="margin:0">Your telemetry</span>
+            <button id="tel-clear" class="btn subtle mini">Clear</button>
+          </div>
+          <p class="def-explain">Tick the log sources your SOC actually ingests. Visibility per technique is computed against this.</p>
+          <div id="tel-presets" class="tel-presets"></div>
+          <div id="tel-groups"></div>
+        </aside>
+        <div class="detect-main">
+          <div id="dt-summary" class="detect-summary"></div>
+          <div id="dt-scoring-note" class="def-explain"></div>
+          <ol id="dt-worklist" class="worklist"></ol>
+          <div id="dt-more-wrap" class="dt-more-wrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DEFENSE ============ -->
+    <section id="view-defense" class="view">
+      <div id="defense" class="defense"></div>
+    </section>
+
+    <aside id="panel" class="panel">
+      <div id="panel-empty" class="panel-empty">
+        <div class="panel-empty-icon">◉ ─ ◉</div>
+        <p>Select anything — a group, software, technique, campaign or mitigation — to see its profile and relationships here.</p>
+      </div>
+      <div id="panel-content" hidden></div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <p>Data © The MITRE Corporation — <a href="https://attack.mitre.org/resources/legal-and-branding/terms-of-use/" target="_blank" rel="noopener">ATT&CK Terms of Use</a>. This project is not affiliated with or endorsed by MITRE.</p>
+  </footer>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
