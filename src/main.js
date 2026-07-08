@@ -17,5 +17,14 @@ window.Defense = Defense
 window.Panel = Panel
 window.Tour = Tour
 
+// Theme toggle — the saved theme is applied by an inline script in index.html
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const root = document.documentElement
+  const toLight = root.getAttribute('data-theme') !== 'light'
+  if (toLight) root.setAttribute('data-theme', 'light')
+  else root.removeAttribute('data-theme')
+  localStorage.setItem('aaw-theme', toLight ? 'light' : 'dark')
+})
+
 // Initialize the app
 initApp()

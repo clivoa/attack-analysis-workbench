@@ -13,7 +13,43 @@
   --danger: #f87171;
   --font: "Inter", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
 }
+
+:root[data-theme="light"] {
+  --bg: #f4f6fa;
+  --bg-raised: #ffffff;
+  --bg-panel: rgba(255, 255, 255, 0.94);
+  --border: #dde2ec;
+  --border-bright: #c4cddf;
+  --text: #1a2233;
+  --text-dim: #57617a;
+  --text-faint: #8b93a7;
+  --accent: #0d9488;
+  --accent-2: #6366f1;
+  --warn: #b45309;
+  --danger: #dc2626;
+  color-scheme: light;
+}
+
+/* Light-theme overrides for colors not driven by variables */
+:root[data-theme="light"] .topbar { background: linear-gradient(180deg, #ffffff, #f0f3f8); }
+:root[data-theme="light"] .brand-mark { text-shadow: none; }
+:root[data-theme="light"] .link { stroke: #9aa6c0; }
+:root[data-theme="light"] .node circle { stroke: rgba(0, 0, 0, 0.28); }
+:root[data-theme="light"] .node.selected circle {
+  stroke: #1a2233;
+  filter: drop-shadow(0 0 6px rgba(26, 34, 51, 0.35));
+}
+:root[data-theme="light"] .search-results { box-shadow: 0 12px 40px rgba(15, 23, 42, 0.16); }
+:root[data-theme="light"] .tooltip { box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18); }
+:root[data-theme="light"] .tour-modal-backdrop { background: rgba(15, 23, 42, 0.38); }
+:root[data-theme="light"] .tour-modal { box-shadow: 0 24px 80px rgba(15, 23, 42, 0.25); }
+:root[data-theme="light"] .sum-card.good .sum-num,
+:root[data-theme="light"] .ls-list li.have .ls-mark,
+:root[data-theme="light"] .an-ok,
+:root[data-theme="light"] .an-log.have { color: #16a34a; }
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #9aa6c0; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -82,6 +118,32 @@ body { display: flex; flex-direction: column; }
 }
 
 .controls { display: flex; align-items: center; gap: 18px; }
+
+/* Discreet icon buttons (theme toggle, GitHub link) */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--text-faint);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.icon-btn:hover { color: var(--text); background: var(--bg-raised); }
+
+.icon-btn svg { width: 16px; height: 16px; display: block; }
+
+.gh-link { margin-left: -10px; }
+
+#theme-toggle .icon-moon { display: none; }
+:root[data-theme="light"] #theme-toggle .icon-moon { display: block; }
+:root[data-theme="light"] #theme-toggle .icon-sun { display: none; }
 
 /* Search */
 .search-wrap { position: relative; }
